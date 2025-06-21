@@ -1,3 +1,5 @@
+[Gemini conversation](https://g.co/gemini/share/78ba60c27690)
+
 Do a deep research Prompt on The Nature of "I" - Consciousness, Ego, and Self-Identity
 
 Here are additional instructions on what to consider in your research.
