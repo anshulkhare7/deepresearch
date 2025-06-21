@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Nature of "I": An Interactive Exploration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Chosen Palette: Warm Neutrals (Stone, Slate, Teal) -->
+    <!-- Application Structure Plan: The SPA uses a non-linear, thematic dashboard structure instead of mirroring the report's chapters. The main sections ('Perspectives', 'The Brain's Self', 'Altered States', 'The Big Questions') are accessible via a sticky navigation bar. This design promotes user-driven exploration and comparison of complex, interconnected ideas. For instance, a user can directly compare a philosophical concept with a neuroscientific finding without linear scrolling. This is more effective for synthesizing information from diverse fields than a simple text document, encouraging discovery and deeper understanding of the multifaceted nature of the 'I'. -->
+    <!-- Visualization & Content Choices: The application translates dense text into interactive experiences. 1) Goal: Compare -> A multi-series bar chart (Chart.js) is used to compare philosophical traditions across key conceptual axes (e.g., 'Self as Entity' vs. 'Self as Process'), making abstract differences tangible. 2) Goal: Inform/Organize -> An interactive brain diagram (HTML/CSS divs) allows users to explore neural correlates by hovering, providing a spatial and intuitive way to learn this information from the report's tables. 3) Goal: Analyze Change -> A dynamic radar chart (Chart.js) visualizes how different altered states (Meditation, Psychedelics, Flow) impact self-perception, offering a clear comparative view. 4) Goal: Explore Deep Concepts -> Complex topics like the 'Hard Problem' are presented in interactive, expandable cards, breaking down dense information into digestible pieces. This approach prioritizes interaction and visual synthesis over passive reading. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: #f5f5f4; /* stone-100 */
+        color: #334155; /* slate-700 */
+      }
+      .nav-link {
+        transition: color 0.3s ease, border-color 0.3s ease;
+      }
+      .card {
+        background-color: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1),
+          0 2px 4px -2px rgb(0 0 0 / 0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+      .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1),
+          0 4px 6px -4px rgb(0 0 0 / 0.1);
+      }
+      .perspective-btn {
+        transition: background-color 0.3s, color 0.3s;
+      }
+      .perspective-btn.active {
+        background-color: #0d9488; /* teal-600 */
+        color: white;
+      }
+      .chart-container {
+        position: relative;
+        width: 100%;
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+        height: 400px;
+        max-height: 50vh;
+      }
+      .brain-hotspot {
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        background-color: rgba(13, 148, 136, 0.5);
+        border-radius: 50%;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .brain-hotspot:hover {
+        background-color: rgba(13, 148, 136, 0.8);
+        transform: scale(1.2);
+      }
+      .brain-hotspot .tooltip {
+        visibility: hidden;
+        width: 220px;
+        background-color: #1f2937; /* gray-800 */
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 8px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        margin-left: -110px;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .brain-hotspot:hover .tooltip {
+        visibility: visible;
+        opacity: 1;
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <!-- Header & Navigation -->
+    <header class="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-50">
+      <nav class="container mx-auto px-4 lg:px-6">
+        <div class="flex justify-between items-center py-4">
+          <h1 class="text-xl md:text-2xl font-bold text-teal-700">
+            The Nature of "I"
+          </h1>
+          <div class="hidden md:flex space-x-6">
+            <a
+              href="#perspectives"
+              class="nav-link text-slate-600 hover:text-teal-600 border-b-2 border-transparent hover:border-teal-600"
+              >Perspectives</a
+            >
+            <a
+              href="#brain"
+              class="nav-link text-slate-600 hover:text-teal-600 border-b-2 border-transparent hover:border-teal-600"
+              >The Brain's Self</a
+            >
+            <a
+              href="#states"
+              class="nav-link text-slate-600 hover:text-teal-600 border-b-2 border-transparent hover:border-teal-600"
+              >Altered States</a
+            >
+            <a
+              href="#questions"
+              class="nav-link text-slate-600 hover:text-teal-600 border-b-2 border-transparent hover:border-teal-600"
+              >The Big Questions</a
+            >
+          </div>
+          <div class="md:hidden">
+            <select
+              id="mobile-nav"
+              class="bg-stone-200 border border-stone-300 text-slate-700 text-sm rounded-lg focus:ring-teal-500 focus:border-teal-500 block w-full p-2.5"
+            >
+              <option value="#hero">Home</option>
+              <option value="#perspectives">Perspectives</option>
+              <option value="#brain">The Brain's Self</option>
+              <option value="#states">Altered States</option>
+              <option value="#questions">The Big Questions</option>
+            </select>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Hero Section -->
+      <section id="hero" class="py-20 md:py-32 bg-white">
+        <div class="container mx-auto text-center px-4">
+          <h2
+            class="text-4xl md:text-6xl font-extrabold text-slate-800 leading-tight"
+          >
+            What is the "I" that experiences?
+          </h2>
+          <p class="mt-6 max-w-3xl mx-auto text-lg md:text-xl text-slate-600">
+            An interactive journey through psychology, philosophy, and
+            neuroscience to explore the elusive concepts of self, ego, and
+            consciousness. This application synthesizes a comprehensive report
+            into a dynamic, explorable format.
+          </p>
+          <a
+            href="#perspectives"
+            class="mt-10 inline-block bg-teal-600 text-white font-bold py-3 px-8 rounded-full hover:bg-teal-700 transition-transform transform hover:scale-105"
+            >Begin Exploration &rarr;</a
+          >
+        </div>
+      </section>
+
+      <!-- Perspectives Section -->
+      <section id="perspectives" class="py-16 md:py-24">
+        <div class="container mx-auto px-4 lg:px-6">
+          <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold">
+              A Spectrum of Perspectives
+            </h2>
+            <p class="mt-4 max-w-2xl mx-auto text-slate-600">
+              The concept of 'self' is not monolithic. Different disciplines
+              offer unique lenses to understand its nature. Select a perspective
+              below to explore its core ideas and how they contrast with one
+              another.
+            </p>
+          </div>
+          <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+            <button
+              class="perspective-btn active py-2 px-4 rounded-full bg-white font-semibold"
+              data-perspective="psychology"
+            >
+              Psychology
+            </button>
+            <button
+              class="perspective-btn py-2 px-4 rounded-full bg-white font-semibold"
+              data-perspective="philosophy"
+            >
+              Philosophy
+            </button>
+            <button
+              class="perspective-btn py-2 px-4 rounded-full bg-white font-semibold"
+              data-perspective="neuroscience"
+            >
+              Neuroscience
+            </button>
+          </div>
+
+          <div id="perspective-content" class="mt-8">
+            <!-- Content will be dynamically inserted here -->
+          </div>
+          <div class="mt-16">
+            <h3 class="text-2xl font-bold text-center mb-6">
+              Comparing Philosophical Views
+            </h3>
+            <div class="chart-container">
+              <canvas id="philosophyChart"></canvas>
+            </div>
+            <p class="text-center mt-4 text-sm text-slate-500">
+              This chart visualizes how different philosophical traditions
+              conceptualize the self along two key axes: whether the self is
+              seen as a stable, independent entity versus a fluid process, and
+              whether it's primarily an individualistic or relational construct.
+              It simplifies complex ideas into a comparative format.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- The Brain's Self Section -->
+      <section id="brain" class="py-16 md:py-24 bg-white">
+        <div class="container mx-auto px-4 lg:px-6">
+          <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold">
+              The Brain's Self: A Neural Map
+            </h2>
+            <p class="mt-4 max-w-2xl mx-auto text-slate-600">
+              The 'I' is not found in a single spot but emerges from a network
+              of brain regions. This section visualizes the key areas involved
+              in self-referential thought, embodiment, and consciousness. Hover
+              over the hotspots on the diagram to learn about each region's
+              role.
+            </p>
+          </div>
+          <div class="max-w-3xl mx-auto aspect-w-16 aspect-h-9 relative">
+            <div
+              class="w-full h-full bg-stone-200 rounded-lg flex items-center justify-center relative"
+            >
+              <!-- Simplified Brain Diagram using divs -->
+              <div
+                class="relative w-[300px] h-[250px] md:w-[400px] md:h-[320px]"
+              >
+                <div
+                  class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full bg-stone-300 rounded-[50%_50%_45%_45%/60%_60%_40%_40%] opacity-50"
+                ></div>
+                <div
+                  class="absolute top-[20%] left-[55%] w-1/2 h-1/2 bg-stone-400 rounded-[50%] opacity-50"
+                ></div>
+
+                <!-- Hotspots -->
+                <div class="brain-hotspot" style="top: 15%; left: 35%">
+                  🧠
+                  <span class="tooltip"
+                    ><b>mPFC:</b> The 'narrator'. Central to self-referential
+                    processing, social cognition, and creating the story of
+                    you.</span
+                  >
+                </div>
+                <div class="brain-hotspot" style="top: 40%; left: 65%">
+                  🧠
+                  <span class="tooltip"
+                    ><b>PCC:</b> The 'reflector'. Key for self-reflection,
+                    autobiographical memory, and a core hub of the Default Mode
+                    Network.</span
+                  >
+                </div>
+                <div class="brain-hotspot" style="top: 60%; left: 20%">
+                  🧠
+                  <span class="tooltip"
+                    ><b>TPJ:</b> The 'boundary-setter'. Integrates sensory info
+                    to distinguish self from other and underpins our sense of
+                    embodiment.</span
+                  >
+                </div>
+                <div class="brain-hotspot" style="top: 75%; left: 50%">
+                  🧠
+                  <span class="tooltip"
+                    ><b>DMN:</b> The 'daydreamer' network. Active during rest
+                    and mind-wandering. Its disruption is linked to ego
+                    dissolution.</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Altered States Section -->
+      <section id="states" class="py-16 md:py-24">
+        <div class="container mx-auto px-4 lg:px-6">
+          <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold">Altering the Self</h2>
+            <p class="mt-4 max-w-2xl mx-auto text-slate-600">
+              The sense of self is not fixed. Experiences like meditation,
+              psychedelics, and flow states can profoundly alter it, often by
+              disrupting the brain's Default Mode Network. This chart compares
+              their typical effects on self-perception.
+            </p>
+          </div>
+          <div class="chart-container h-[450px] max-h-[60vh]">
+            <canvas id="alteredStatesChart"></canvas>
+          </div>
+          <div
+            id="altered-states-info"
+            class="mt-8 max-w-3xl mx-auto text-center p-4 bg-white rounded-lg shadow"
+          >
+            <p class="text-slate-600">
+              Click on a label in the chart legend to toggle its visibility and
+              compare different states of consciousness. Each practice modulates
+              self-awareness and brain activity in unique ways, offering clues
+              about the constructed nature of the 'I'.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- The Big Questions Section -->
+      <section id="questions" class="py-16 md:py-24 bg-white">
+        <div class="container mx-auto px-4 lg:px-6">
+          <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-bold">
+              The Enduring Mysteries
+            </h2>
+            <p class="mt-4 max-w-2xl mx-auto text-slate-600">
+              Despite scientific advances, profound philosophical questions
+              about consciousness and the self remain. Explore some of the most
+              challenging paradoxes that continue to puzzle thinkers today.
+            </p>
+          </div>
+          <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div class="card p-6">
+              <h3 class="font-bold text-xl text-teal-700">The Hard Problem</h3>
+              <p class="mt-2 text-slate-600">
+                Why does physical brain processing give rise to subjective,
+                qualitative experience (qualia)? Why does seeing red *feel* like
+                something?
+              </p>
+            </div>
+            <div class="card p-6">
+              <h3 class="font-bold text-xl text-teal-700">
+                The Binding Problem
+              </h3>
+              <p class="mt-2 text-slate-600">
+                How does the brain combine disparate signals (color, shape,
+                sound) into a single, unified conscious experience of an object
+                or event?
+              </p>
+            </div>
+            <div class="card p-6">
+              <h3 class="font-bold text-xl text-teal-700">
+                Free Will & Agency
+              </h3>
+              <p class="mt-2 text-slate-600">
+                If the 'I' is a construction of the brain, what does this imply
+                for personal responsibility and control over our actions?
+              </p>
+            </div>
+            <div class="card p-6">
+              <h3 class="font-bold text-xl text-teal-700">
+                The Self as Illusion
+              </h3>
+              <p class="mt-2 text-slate-600">
+                Is the self a real entity or a useful fiction created by the
+                brain for survival? Many neuroscientists and philosophers argue
+                for the latter.
+              </p>
+            </div>
+            <div class="card p-6">
+              <h3 class="font-bold text-xl text-teal-700">The Meta-Problem</h3>
+              <p class="mt-2 text-slate-600">
+                Why do we find consciousness so mysterious? This asks why we
+                have the intuition that there is a 'Hard Problem' in the first
+                place.
+              </p>
+            </div>
+            <div class="card p-6">
+              <h3 class="font-bold text-xl text-teal-700">
+                Persistence of Identity
+              </h3>
+              <p class="mt-2 text-slate-600">
+                How do we account for our sense of a persistent self over time,
+                despite constant physical and mental change?
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="bg-slate-800 text-stone-300 py-8">
+      <div class="container mx-auto text-center px-4">
+        <p>An Interactive Synthesis Project.</p>
+        <p class="text-sm mt-2 text-stone-400">
+          Content derived from "The Multifaceted Nature of 'I': An
+          Interdisciplinary Exploration of Consciousness, Ego, and
+          Self-Identity".
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const perspectivesData = {
+          psychology: {
+            title: "The Psychological Self",
+            content: `
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg text-teal-700">Freud's Tripartite Model</h4>
+                        <p class="mt-2 text-sm text-slate-600">The Ego acts as a rational mediator between the primal Id, the moralistic Superego, and the external world. A healthy ego is crucial for mental well-being.</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg text-teal-700">Development of Self-Concept</h4>
+                        <p class="mt-2 text-sm text-slate-600">Our self-concept is not innate but develops socially, through concepts like the "looking-glass self" (Cooley) and the distinction between the spontaneous "I" and the social "Me" (Mead).</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg text-teal-700">Experiencing vs. Remembering Self</h4>
+                        <p class="mt-2 text-sm text-slate-600">Kahneman distinguishes the 'experiencing self' (lives in the moment) from the 'remembering self' (constructs a narrative). We prioritize the story our remembering self tells.</p>
+                    </div>
+                </div>
+            `,
+          },
+          philosophy: {
+            title: "The Philosophical Self",
+            content: `
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg text-teal-700">Western Traditions</h4>
+                        <p class="mt-2 text-sm text-slate-600">Ranges from Descartes' "I think, therefore I am" (self as a substance) to Hume's "bundle theory" (self as a collection of perceptions) and modern narrative theories.</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg text-teal-700">Eastern Traditions (Anatta)</h4>
+                        <p class="mt-2 text-sm text-slate-600">Buddhism's "non-self" doctrine posits no permanent, unchanging self exists. The 'I' is a constantly changing assemblage of experiences, and clinging to it causes suffering.</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg text-teal-700">Indigenous & Relational Self</h4>
+                        <p class="mt-2 text-sm text-slate-600">Identity is defined not by individuality but through intricate relationships with community, nature, and ancestors. The self *is* the relationships.</p>
+                    </div>
+                </div>
+            `,
+          },
+          neuroscience: {
+            title: "The Neurological Self",
+            content: `
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg text-teal-700">Emergent & Distributed</h4>
+                        <p class="mt-2 text-sm text-slate-600">There is no "self center" in the brain. The 'I' is an emergent property arising from the dynamic, integrated activity across distributed neural networks.</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg text-teal-700">Default Mode Network (DMN)</h4>
+                        <p class="mt-2 text-sm text-slate-600">A key network active during rest, self-reflection, and mind-wandering. Its activity is often reduced during states of "ego dissolution" (e.g., meditation, psychedelics).</p>
+                    </div>
+                    <div class="card p-6">
+                        <h4 class="font-bold text-lg text-teal-700">Predictive Processing</h4>
+                        <p class="mt-2 text-sm text-slate-600">The brain actively constructs our sense of self by making predictions about sensory input. The self is a continuously updated internal model, not a reflection of reality.</p>
+                    </div>
+                </div>
+            `,
+          },
+        };
+
+        const perspectiveContentEl = document.getElementById(
+          "perspective-content"
+        );
+        const perspectiveBtns = document.querySelectorAll(".perspective-btn");
+
+        function updatePerspectiveContent(perspective) {
+          const data = perspectivesData[perspective];
+          perspectiveContentEl.innerHTML = `
+            <h3 class="text-2xl font-bold text-center mb-6">${data.title}</h3>
+            ${data.content}
+        `;
+        }
+
+        perspectiveBtns.forEach((btn) => {
+          btn.addEventListener("click", () => {
+            perspectiveBtns.forEach((b) => b.classList.remove("active"));
+            btn.classList.add("active");
+            const perspective = btn.dataset.perspective;
+            updatePerspectiveContent(perspective);
+          });
+        });
+
+        // Initial load
+        updatePerspectiveContent("psychology");
+
+        // Philosophy Chart
+        const philosophyCtx = document
+          .getElementById("philosophyChart")
+          .getContext("2d");
+        new Chart(philosophyCtx, {
+          type: "bar",
+          data: {
+            labels: [
+              "Rationalism (Descartes)",
+              "Empiricism (Hume)",
+              "Buddhism (Anatta)",
+              "Indigenous",
+            ],
+            datasets: [
+              {
+                label: "Self as Stable Entity",
+                data: [9, 2, 1, 4],
+                backgroundColor: "rgba(13, 148, 136, 0.6)", // teal-600
+                borderColor: "rgba(13, 148, 136, 1)",
+                borderWidth: 1,
+              },
+              {
+                label: "Self as Fluid Process",
+                data: [2, 9, 10, 8],
+                backgroundColor: "rgba(51, 65, 85, 0.6)", // slate-700
+                borderColor: "rgba(51, 65, 85, 1)",
+                borderWidth: 1,
+              },
+              {
+                label: "Self as Individualistic",
+                data: [10, 8, 3, 1],
+                backgroundColor: "rgba(249, 115, 22, 0.6)", // orange-500
+                borderColor: "rgba(249, 115, 22, 1)",
+                borderWidth: 1,
+                hidden: true,
+              },
+              {
+                label: "Self as Relational",
+                data: [2, 3, 8, 10],
+                backgroundColor: "rgba(168, 85, 247, 0.6)", // purple-500
+                borderColor: "rgba(168, 85, 247, 1)",
+                borderWidth: 1,
+                hidden: true,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              y: {
+                beginAtZero: true,
+                max: 10,
+                title: {
+                  display: true,
+                  text: "Conceptual Emphasis (Arbitrary Units)",
+                },
+              },
+            },
+            plugins: {
+              title: {
+                display: true,
+                text: "Conceptualization of Self Across Traditions",
+              },
+              tooltip: {
+                callbacks: {
+                  label: function (context) {
+                    let label = context.dataset.label || "";
+                    if (label) {
+                      label += ": ";
+                    }
+                    label += `Emphasis level ${context.parsed.y}/10`;
+                    return label;
+                  },
+                },
+              },
+            },
+          },
+        });
+
+        // Altered States Chart
+        const alteredStatesCtx = document
+          .getElementById("alteredStatesChart")
+          .getContext("2d");
+        new Chart(alteredStatesCtx, {
+          type: "radar",
+          data: {
+            labels: [
+              "Ego Dissolution",
+              "Loss of Self-Consciousness",
+              "Unity/Oneness",
+              "DMN Disruption",
+              "Therapeutic Potential",
+              "Sense of Control",
+            ],
+            datasets: [
+              {
+                label: "Psychedelics",
+                data: [9, 8, 9, 8, 7, 2],
+                backgroundColor: "rgba(219, 39, 119, 0.2)",
+                borderColor: "rgb(219, 39, 119)",
+                pointBackgroundColor: "rgb(219, 39, 119)",
+              },
+              {
+                label: "Meditation",
+                data: [6, 7, 5, 6, 8, 7],
+                backgroundColor: "rgba(13, 148, 136, 0.2)",
+                borderColor: "rgb(13, 148, 136)",
+                pointBackgroundColor: "rgb(13, 148, 136)",
+              },
+              {
+                label: "Flow States",
+                data: [4, 9, 2, 4, 5, 9],
+                backgroundColor: "rgba(59, 130, 246, 0.2)",
+                borderColor: "rgb(59, 130, 246)",
+                pointBackgroundColor: "rgb(59, 130, 246)",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              r: {
+                beginAtZero: true,
+                max: 10,
+                angleLines: { color: "rgba(0, 0, 0, 0.1)" },
+                grid: { color: "rgba(0, 0, 0, 0.1)" },
+                pointLabels: { font: { size: 12 }, color: "#334155" },
+                ticks: {
+                  backdropColor: "rgba(255, 255, 255, 0.75)",
+                  color: "#475569",
+                },
+              },
+            },
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              title: {
+                display: true,
+                text: "Comparative Effects of Altered States on Self-Perception",
+              },
+            },
+          },
+        });
+
+        // Mobile navigation
+        const mobileNav = document.getElementById("mobile-nav");
+        mobileNav.addEventListener("change", (e) => {
+          window.location.hash = e.target.value;
+        });
+      });
+    </script>
+  </body>
+</html>
